@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Reservation Test</title>
+</head>
+<body>
+
+  <h1>Reservation Booking</h1>
+  <p>Standalone test for the Table / KTV Reservation module.</p>
+
+  <h2>Create Reservation</h2>
+
+  <label for="resCustomer">Customer Name:</label><br>
+  <input type="text" id="resCustomer" placeholder="Customer Name"><br><br>
+
+  <label for="resContact">Contact Number:</label><br>
+  <input type="text" id="resContact" placeholder="Contact Number (optional)"><br><br>
+
+  <label for="resFacilityType">Facility Type:</label><br>
+  <select id="resFacilityType">
+    <option value="Billiard">Billiard Table</option>
+    <option value="KTV">KTV Room</option>
+  </select><br><br>
+
+  <label for="resFacilitySelect">Facility Number:</label><br>
+  <select id="resFacilitySelect">
+    <option value="B1">Billiard Table 1</option>
+    <option value="B2">Billiard Table 2</option>
+    <option value="B3">Billiard Table 3</option>
+  </select><br><br>
+
+  <label for="resDate">Date:</label><br>
+  <input type="date" id="resDate"><br><br>
+
+  <label for="resStartTime">Start Time:</label><br>
+  <input type="time" id="resStartTime"><br><br>
+
+  <label for="resDurationSelect">Duration:</label><br>
+  <select id="resDurationSelect">
+    <option value="30">30 Minutes</option>
+    <option value="60" selected>1 Hour</option>
+    <option value="120">2 Hours</option>
+    <option value="180">3 Hours</option>
+    <option value="240">4 Hours</option>
+    <option value="300">5 Hours</option>
+    <option value="360">6 Hours</option>
+    <option value="420">7 Hours</option>
+    <option value="480">8 Hours</option>
+  </select><br><br>
+
+  <label for="resDurationManual">Manual Duration:</label><br>
+  <input type="text" id="resDurationManual" placeholder='Example: "1 hour 30 minutes"'><br><br>
+
+  <button id="createReservationBtn">Create Reservation (Auto Price)</button>
+
+  <p id="resMsg"></p>
+
+  <hr>
+
+  <h2>Search Reservation</h2>
+
+  <input type="text" id="resSearchInput" placeholder="Search by customer name or ID">
+  <button id="searchReservationBtn">Find Reservation</button>
+
+  <p id="resSearchMsg"></p>
+
+  <hr>
+
+  <h2>Reservation List</h2>
+
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Customer</th>
+        <th>Contact</th>
+        <th>Facility</th>
+        <th>Date</th>
+        <th>Sched. Start</th>
+        <th>Sched. End</th>
+        <th>Duration</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="reservationsBody"></tbody>
+  </table>
+
+  <script src="table-reservation.js"></script>
+</body>
+</html>
