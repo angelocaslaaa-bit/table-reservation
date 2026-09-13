@@ -1,6 +1,6 @@
 // ==========================================
 // TABLE RESERVATION SYSTEM
-// Array + Linear Search
+// Uses ARRAY + LINEAR SEARCH
 // ==========================================
 
 
@@ -15,26 +15,28 @@ const RATE = {
 
 
 // ==========================================
-// ARRAYS
+// FACILITIES ARRAY
 // ==========================================
 
-// Array of available facilities
 let facilities = [
     {
         id: "B1",
         name: "Billiard Table 1",
         type: "Billiard"
     },
+
     {
         id: "B2",
         name: "Billiard Table 2",
         type: "Billiard"
     },
+
     {
         id: "B3",
         name: "Billiard Table 3",
         type: "Billiard"
     },
+
     {
         id: "K1",
         name: "KTV Room 1",
@@ -43,57 +45,62 @@ let facilities = [
 ];
 
 
-// Array where reservations will be stored
+// ==========================================
+// RESERVATIONS ARRAY
+// ==========================================
+
 let reservations = [];
 
 let nextReservationId = 1;
 
 
 // ==========================================
-// INITIALIZE
+// PAGE LOAD
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    // Set today's date automatically
+    // Automatically show today's date
     document.getElementById("resDate").value =
         new Date().toISOString().split("T")[0];
 
-    // Show Billiard Tables 1-3 by default
+    // Automatically show Billiard Table 1-3
     populateFacilitySelect();
 
-    // Change facility numbers when type changes
-    document
-        .getElementById("resFacilityType")
-        .addEventListener("change", populateFacilitySelect);
-
+    // Display reservation table
+    renderReservations();
 });
 
 
 // ==========================================
-// FACILITY SELECT
+// DISPLAY FACILITIES
 // ==========================================
 
 function populateFacilitySelect() {
 
-    const facilityType =
+    let facilityType =
         document.getElementById("resFacilityType").value;
 
-    const facilitySelect =
+    let facilitySelect =
         document.getElementById("resFacilitySelect");
 
+    // Clear old options
     facilitySelect.innerHTML = "";
 
 
-    // Go through facilities array
+    // Search facilities array
     for (let i = 0; i < facilities.length; i++) {
 
         if (facilities[i].type === facilityType) {
 
-            const option = document.createElement("option");
+            let option =
+                document.createElement("option");
 
-            option.value = facilities[i].id;
-            option.textContent = facilities[i].name;
+            option.value =
+                facilities[i].id;
+
+            option.textContent =
+                facilities[i].name;
 
             facilitySelect.appendChild(option);
         }
@@ -102,80 +109,106 @@ function populateFacilitySelect() {
 
 
 // ==========================================
-// HELPER FUNCTIONS
+// CONVERT TIME TO MINUTES
 // ==========================================
 
-// Convert time to minutes
 function timeToMinutes(time) {
 
-    const parts = time.split(":");
+    let parts = time.split(":");
 
-    const hour = Number(parts[0]);
-    const minute = Number(parts[1]);
+    let hour =
+        parseInt(parts[0]);
+
+    let minute =
+        parseInt(parts[1]);
 
     return (hour * 60) + minute;
 }
 
 
-// Convert minutes to readable duration
+// ==========================================
+// COMPUTE END TIME
+// ==========================================
+
+function computeEndTime(startTime, duration) {
+
+    let startMinutes =
+        timeToMinutes(startTime);
+
+    let endMinutes =
+        startMinutes + duration;
+
+    let hour =
+        Math.floor(endMinutes / 60) % 24;
+
+    let minute =
+        endMinutes % 60;
+
+    return (
+        String(hour).padStart(2, "0") +
+        ":" +
+        String(minute).padStart(2, "0")
+    );
+}
+
+
+// ==========================================
+// CONVERT MINUTES TO HOURS/MINUTES
+// ==========================================
+
 function minutesToHM(minutes) {
 
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+    let hours =
+        Math.floor(minutes / 60);
 
-    let result = "";
+    let remainingMinutes =
+        minutes % 60;
+
+    let text = "";
+
 
     if (hours > 0) {
 
-        result += hours + " hour";
+        text += hours + " hour";
 
         if (hours > 1) {
-            result += "s";
+            text += "s";
         }
     }
 
-    if (mins > 0) {
 
-        if (result !== "") {
-            result += " ";
+    if (remainingMinutes > 0) {
+
+        if (text !== "") {
+            text += " ";
         }
 
-        result += mins + " minute";
+        text +=
+            remainingMinutes + " minute";
 
-        if (mins > 1) {
-            result += "s";
+        if (remainingMinutes > 1) {
+            text += "s";
         }
     }
 
-    return result;
+
+    return text;
 }
 
 
-// Calculate ending time
-function computeEndTime(startTime, duration) {
+// ==========================================
+// COMPUTE PRICE
+// ==========================================
 
-    const startMinutes = timeToMinutes(startTime);
-
-    const endMinutes = startMinutes + duration;
-
-    const hours =
-        Math.floor(endMinutes / 60) % 24;
-
-    const minutes =
-        endMinutes % 60;
-
-    return String(hours).padStart(2, "0") +
-        ":" +
-        String(minutes).padStart(2, "0");
-}
-
-
-// Calculate price
 function computePrice(type, duration) {
 
-    return Math.round(
-        (duration / 60) * RATE[type]
-    );
+    let hourlyRate =
+        RATE[type];
+
+    let price =
+        (duration / 60) * hourlyRate;
+
+    return Math.round(price);
 }
 
 
@@ -186,12 +219,14 @@ function computePrice(type, duration) {
 function isOverlapping(
     newStart,
     newEnd,
-    oldStart,
-    oldEnd
+    existingStart,
+    existingEnd
 ) {
 
-    return newStart < oldEnd &&
-           oldStart < newEnd;
+    return (
+        newStart < existingEnd &&
+        existingStart < newEnd
+    );
 }
 
 
@@ -206,32 +241,38 @@ function checkReservationConflict(
     endTime
 ) {
 
-    const newStart =
+    let newStart =
         timeToMinutes(startTime);
 
-    const newEnd =
+    let newEnd =
         timeToMinutes(endTime);
 
 
-    // Search every reservation
-    for (let i = 0; i < reservations.length; i++) {
+    // Check reservations one by one
+    for (
+        let i = 0;
+        i < reservations.length;
+        i++
+    ) {
 
-        const reservation = reservations[i];
+        let current =
+            reservations[i];
+
 
         if (
-            reservation.facilityId === facilityId &&
-            reservation.date === date &&
-            reservation.status === "Reserved"
+            current.facilityId === facilityId &&
+            current.date === date &&
+            current.status !== "Cancelled"
         ) {
 
-            const oldStart =
+            let existingStart =
                 timeToMinutes(
-                    reservation.scheduledStart
+                    current.scheduledStart
                 );
 
-            const oldEnd =
+            let existingEnd =
                 timeToMinutes(
-                    reservation.scheduledEnd
+                    current.scheduledEnd
                 );
 
 
@@ -239,15 +280,42 @@ function checkReservationConflict(
                 isOverlapping(
                     newStart,
                     newEnd,
-                    oldStart,
-                    oldEnd
+                    existingStart,
+                    existingEnd
                 )
             ) {
 
-                return reservation;
+                return current;
             }
         }
     }
+
+
+    return null;
+}
+
+
+// ==========================================
+// FIND FACILITY
+// ==========================================
+
+function findFacility(facilityId) {
+
+    for (
+        let i = 0;
+        i < facilities.length;
+        i++
+    ) {
+
+        if (
+            facilities[i].id ===
+            facilityId
+        ) {
+
+            return facilities[i];
+        }
+    }
+
 
     return null;
 }
@@ -259,47 +327,53 @@ function checkReservationConflict(
 
 function handleCreateReservation() {
 
-    const customer =
+    let customer =
         document
             .getElementById("resCustomer")
             .value
             .trim();
 
-    const contact =
+
+    let contact =
         document
             .getElementById("resContact")
             .value
             .trim();
 
-    const facilityType =
+
+    let facilityType =
         document
             .getElementById("resFacilityType")
             .value;
 
-    const facilityId =
+
+    let facilityId =
         document
             .getElementById("resFacilitySelect")
             .value;
 
-    const date =
+
+    let date =
         document
             .getElementById("resDate")
             .value;
 
-    const startTime =
+
+    let startTime =
         document
             .getElementById("resStartTime")
             .value;
 
-    const duration =
-        Number(
+
+    let duration =
+        parseInt(
             document
                 .getElementById("resDurationSelect")
                 .value
         );
 
 
-    // Validation
+    // Check required fields
     if (
         customer === "" ||
         facilityId === "" ||
@@ -307,39 +381,41 @@ function handleCreateReservation() {
         startTime === ""
     ) {
 
-        showMessage(
-            "resMsg",
-            "Please fill in all required fields."
-        );
+        document.getElementById(
+            "resMsg"
+        ).textContent =
+            "Please complete all required fields.";
 
         return;
     }
 
 
-    // Find facility
-    let selectedFacility = null;
+    // Find selected facility
+    let facility =
+        findFacility(facilityId);
 
-    for (let i = 0; i < facilities.length; i++) {
 
-        if (facilities[i].id === facilityId) {
+    if (facility === null) {
 
-            selectedFacility = facilities[i];
+        document.getElementById(
+            "resMsg"
+        ).textContent =
+            "Facility not found.";
 
-            break;
-        }
+        return;
     }
 
 
-    // Calculate end time
-    const endTime =
+    // Calculate ending time
+    let endTime =
         computeEndTime(
             startTime,
             duration
         );
 
 
-    // Check for schedule conflict
-    const conflict =
+    // Check conflict
+    let conflict =
         checkReservationConflict(
             facilityId,
             date,
@@ -350,23 +426,23 @@ function handleCreateReservation() {
 
     if (conflict !== null) {
 
-        showMessage(
-            "resMsg",
-            "Reservation conflict! " +
-            selectedFacility.name +
+        document.getElementById(
+            "resMsg"
+        ).textContent =
+            "Cannot create reservation. " +
+            facility.name +
             " is already reserved from " +
             conflict.scheduledStart +
             " to " +
             conflict.scheduledEnd +
-            "."
-        );
+            ".";
 
         return;
     }
 
 
     // Calculate price
-    const price =
+    let price =
         computePrice(
             facilityType,
             duration
@@ -374,14 +450,14 @@ function handleCreateReservation() {
 
 
     // Generate reservation ID
-    const reservationId =
+    let reservationId =
         "RES" +
         String(nextReservationId)
             .padStart(3, "0");
 
 
-    // Reservation object
-    const newReservation = {
+    // Create reservation object
+    let newReservation = {
 
         id: reservationId,
 
@@ -391,22 +467,17 @@ function handleCreateReservation() {
 
         facilityId: facilityId,
 
-        facilityName:
-            selectedFacility.name,
+        facilityName: facility.name,
 
-        facilityType:
-            facilityType,
+        facilityType: facilityType,
 
         date: date,
 
-        scheduledStart:
-            startTime,
+        scheduledStart: startTime,
 
-        scheduledEnd:
-            endTime,
+        scheduledEnd: endTime,
 
-        durationMinutes:
-            duration,
+        durationMinutes: duration,
 
         price: price,
 
@@ -414,43 +485,51 @@ function handleCreateReservation() {
     };
 
 
-    // Add reservation to ARRAY
+    // =====================================
+    // ADD RESERVATION TO ARRAY
+    // =====================================
+
     reservations.push(newReservation);
 
+
+    // Next ID
     nextReservationId++;
 
 
-    showMessage(
-        "resMsg",
+    // Success message
+    document.getElementById(
+        "resMsg"
+    ).textContent =
         reservationId +
         " successfully created for " +
         customer +
-        ". Price: ₱" +
-        price
-    );
+        ".";
 
 
-    // Clear inputs
-    document
-        .getElementById("resCustomer")
-        .value = "";
+    // =====================================
+    // UPDATE TABLE
+    // =====================================
 
-    document
-        .getElementById("resContact")
-        .value = "";
-
-    document
-        .getElementById("resStartTime")
-        .value = "";
-
-
-    // Update table
     renderReservations();
+
+
+    // Clear some fields
+    document.getElementById(
+        "resCustomer"
+    ).value = "";
+
+    document.getElementById(
+        "resContact"
+    ).value = "";
+
+    document.getElementById(
+        "resStartTime"
+    ).value = "";
 }
 
 
 // ==========================================
-// LINEAR SEARCH
+// LINEAR SEARCH RESERVATION
 // ==========================================
 
 function linearSearchReservation(query) {
@@ -462,27 +541,27 @@ function linearSearchReservation(query) {
 
 
     // LINEAR SEARCH
-    // Check reservation one by one
+    // Check each reservation one by one
     for (
         let i = 0;
         i < reservations.length;
         i++
     ) {
 
-        const reservation =
+        let current =
             reservations[i];
 
 
         if (
-            reservation.id
+            current.id
                 .toLowerCase() === query ||
 
-            reservation.customerName
+            current.customerName
                 .toLowerCase()
                 .includes(query)
         ) {
 
-            return reservation;
+            return current;
         }
     }
 
@@ -492,12 +571,12 @@ function linearSearchReservation(query) {
 
 
 // ==========================================
-// HANDLE SEARCH
+// SEARCH BUTTON
 // ==========================================
 
 function handleReservationSearch() {
 
-    const query =
+    let query =
         document
             .getElementById("resSearchInput")
             .value;
@@ -505,23 +584,24 @@ function handleReservationSearch() {
 
     if (query.trim() === "") {
 
-        showMessage(
-            "resSearchMsg",
-            "Please enter customer name or reservation ID."
-        );
+        document.getElementById(
+            "resSearchMsg"
+        ).textContent =
+            "Enter customer name or reservation ID.";
 
         return;
     }
 
 
-    const found =
+    let found =
         linearSearchReservation(query);
 
 
     if (found !== null) {
 
-        showMessage(
-            "resSearchMsg",
+        document.getElementById(
+            "resSearchMsg"
+        ).textContent =
 
             "Found: " +
             found.id +
@@ -533,31 +613,32 @@ function handleReservationSearch() {
             found.date +
             " | " +
             found.scheduledStart +
-            "-" +
+            " - " +
             found.scheduledEnd +
             " | ₱" +
             found.price +
             " | " +
-            found.status
-        );
+            found.status;
 
     } else {
 
-        showMessage(
-            "resSearchMsg",
-            "No reservation found."
-        );
+        document.getElementById(
+            "resSearchMsg"
+        ).textContent =
+            "No reservation found.";
     }
 }
 
 
 // ==========================================
-// START RESERVATION
+// START SESSION
 // ==========================================
 
-function handleStartReservation(reservationId) {
+function handleStartReservation(
+    reservationId
+) {
 
-    // Search reservation
+    // Linear search
     for (
         let i = 0;
         i < reservations.length;
@@ -572,11 +653,11 @@ function handleStartReservation(reservationId) {
             reservations[i].status =
                 "Started";
 
-            showMessage(
-                "resMsg",
-                reservations[i].id +
-                " session started."
-            );
+            document.getElementById(
+                "resMsg"
+            ).textContent =
+                reservationId +
+                " session started.";
 
             break;
         }
@@ -591,8 +672,11 @@ function handleStartReservation(reservationId) {
 // CANCEL RESERVATION
 // ==========================================
 
-function handleCancelReservation(reservationId) {
+function handleCancelReservation(
+    reservationId
+) {
 
+    // Linear search
     for (
         let i = 0;
         i < reservations.length;
@@ -607,11 +691,11 @@ function handleCancelReservation(reservationId) {
             reservations[i].status =
                 "Cancelled";
 
-            showMessage(
-                "resMsg",
-                reservations[i].id +
-                " reservation cancelled."
-            );
+            document.getElementById(
+                "resMsg"
+            ).textContent =
+                reservationId +
+                " has been cancelled.";
 
             break;
         }
@@ -623,120 +707,206 @@ function handleCancelReservation(reservationId) {
 
 
 // ==========================================
-// DISPLAY RESERVATIONS
+// DISPLAY RESERVATIONS IN TABLE
 // ==========================================
 
 function renderReservations() {
 
-    const tableBody =
+    let tableBody =
         document.getElementById(
             "reservationsBody"
         );
 
 
+    // Clear table first
     tableBody.innerHTML = "";
 
 
+    // Check every reservation
     for (
         let i = 0;
         i < reservations.length;
         i++
     ) {
 
-        const reservation =
+        let current =
             reservations[i];
 
 
-        // Do not show cancelled reservations
-        if (
-            reservation.status ===
-            "Cancelled"
-        ) {
-
-            continue;
-        }
-
-
-        const row =
+        // Create table row
+        let row =
             document.createElement("tr");
 
 
-        row.innerHTML =
+        // ID
+        let idCell =
+            document.createElement("td");
 
-            "<td>" +
-            reservation.id +
-            "</td>" +
+        idCell.textContent =
+            current.id;
 
-            "<td>" +
-            reservation.customerName +
-            "</td>" +
 
-            "<td>" +
-            reservation.facilityName +
-            "</td>" +
+        // Customer
+        let customerCell =
+            document.createElement("td");
 
-            "<td>" +
-            reservation.date +
-            "</td>" +
+        customerCell.textContent =
+            current.customerName;
 
-            "<td>" +
-            reservation.scheduledStart +
-            "</td>" +
 
-            "<td>" +
-            reservation.scheduledEnd +
-            "</td>" +
+        // Contact
+        let contactCell =
+            document.createElement("td");
 
-            "<td>" +
+        contactCell.textContent =
+            current.contact || "N/A";
+
+
+        // Facility
+        let facilityCell =
+            document.createElement("td");
+
+        facilityCell.textContent =
+            current.facilityName;
+
+
+        // Date
+        let dateCell =
+            document.createElement("td");
+
+        dateCell.textContent =
+            current.date;
+
+
+        // Start
+        let startCell =
+            document.createElement("td");
+
+        startCell.textContent =
+            current.scheduledStart;
+
+
+        // End
+        let endCell =
+            document.createElement("td");
+
+        endCell.textContent =
+            current.scheduledEnd;
+
+
+        // Duration
+        let durationCell =
+            document.createElement("td");
+
+        durationCell.textContent =
             minutesToHM(
-                reservation.durationMinutes
-            ) +
-            "</td>" +
-
-            "<td>₱" +
-            reservation.price +
-            "</td>" +
-
-            "<td>" +
-            reservation.status +
-            "</td>" +
-
-            "<td>" +
-
-            (
-                reservation.status ===
-                "Reserved"
-
-                ?
-
-                "<button onclick=\"handleStartReservation('" +
-                reservation.id +
-                "')\">Start Session</button>"
-
-                :
-
-                ""
-            ) +
-
-            "<button onclick=\"handleCancelReservation('" +
-            reservation.id +
-            "')\">Cancel</button>" +
-
-            "</td>";
+                current.durationMinutes
+            );
 
 
+        // Price
+        let priceCell =
+            document.createElement("td");
+
+        priceCell.textContent =
+            "₱" + current.price;
+
+
+        // Status
+        let statusCell =
+            document.createElement("td");
+
+        statusCell.textContent =
+            current.status;
+
+
+        // Action
+        let actionCell =
+            document.createElement("td");
+
+
+        // Start button
+        if (
+            current.status === "Reserved"
+        ) {
+
+            let startButton =
+                document.createElement(
+                    "button"
+                );
+
+            startButton.textContent =
+                "Start";
+
+            startButton.onclick =
+                function () {
+
+                    handleStartReservation(
+                        current.id
+                    );
+                };
+
+
+            actionCell.appendChild(
+                startButton
+            );
+        }
+
+
+        // Cancel button
+        if (
+            current.status !==
+            "Cancelled"
+        ) {
+
+            let cancelButton =
+                document.createElement(
+                    "button"
+                );
+
+            cancelButton.textContent =
+                "Cancel";
+
+            cancelButton.onclick =
+                function () {
+
+                    handleCancelReservation(
+                        current.id
+                    );
+                };
+
+
+            actionCell.appendChild(
+                cancelButton
+            );
+        }
+
+
+        // Add cells to row
+        row.appendChild(idCell);
+
+        row.appendChild(customerCell);
+
+        row.appendChild(contactCell);
+
+        row.appendChild(facilityCell);
+
+        row.appendChild(dateCell);
+
+        row.appendChild(startCell);
+
+        row.appendChild(endCell);
+
+        row.appendChild(durationCell);
+
+        row.appendChild(priceCell);
+
+        row.appendChild(statusCell);
+
+        row.appendChild(actionCell);
+
+
+        // Add row to table
         tableBody.appendChild(row);
     }
-}
-
-
-// ==========================================
-// MESSAGE
-// ==========================================
-
-function showMessage(elementId, message) {
-
-    document
-        .getElementById(elementId)
-        .textContent = message;
 }
